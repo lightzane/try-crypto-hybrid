@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    // These 2 are required to enable type Uint8Array<ArrayBuffer>
+    "target": "esnext",
+    "moduleResolution": "node",
+
+    "esModuleInterop": true,
+    "noEmitOnError": true,
+    "removeComments": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "~/*": ["public/*"]
+    }
+  }
+}
