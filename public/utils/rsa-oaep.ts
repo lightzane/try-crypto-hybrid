@@ -88,14 +88,24 @@ export async function exportPublicKeyAsPem(publicKey: CryptoKey) {
   // spki = Subject Public Key Info, a standard format for storing public keys
   const spki = await webcrypto.subtle.exportKey('spki', publicKey)
   const base64 = window.btoa(String.fromCharCode(...new Uint8Array(spki)))
-  return `${PEM_PUBLIC_HEADER}\n${base64}\n${PEM_PUBLIC_FOOTER}`
+  // return `${PEM_PUBLIC_HEADER}\n${base64}\n${PEM_PUBLIC_FOOTER}` // ! No newline every 64 characters, just one big base64 string
+  return [
+    PEM_PUBLIC_HEADER,
+    ...(base64.match(/.{1,64}/g) || []), // Split the base64 string into lines of 64 characters
+    PEM_PUBLIC_FOOTER,
+  ].join('\n')
 }
 
 export async function exportPrivateKeyAsPem(privateKey: CryptoKey) {
   // pkcs8 = Public-Key Cryptography Standards #8, a standard format for storing private keys
   const pkcs8 = await webcrypto.subtle.exportKey('pkcs8', privateKey)
   const base64 = window.btoa(String.fromCharCode(...new Uint8Array(pkcs8)))
-  return `${PEM_PRIVATE_HEADER}\n${base64}\n${PEM_PRIVATE_FOOTER}`
+  // return `${PEM_PRIVATE_HEADER}\n${base64}\n${PEM_PRIVATE_FOOTER}` // ! No newline every 64 characters, just one big base64 string
+  return [
+    PEM_PRIVATE_HEADER,
+    ...(base64.match(/.{1,64}/g) || []), // Split the base64 string into lines of 64 characters
+    PEM_PRIVATE_FOOTER,
+  ].join('\n')
 }
 
 export async function importPublicKeyFromPem(pem: string) {
