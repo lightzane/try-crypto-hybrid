@@ -4,6 +4,9 @@
     "target": "esnext",
     "moduleResolution": "node",
 
+    // This is required to enable dynamic import() syntax (e.g. `import('node:fs')`)
+    "module": "esnext",
+
     "esModuleInterop": true,
     "noEmitOnError": true,
     "removeComments": true,

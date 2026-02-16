@@ -10,7 +10,7 @@
       "options": {
         "printWidth": 150
       },
-      "excludeFiles": ["**/aes-gcm.ts", "**/rsa-oaep.ts"]
+      "excludeFiles": ["**/aes-gcm.ts", "**/rsa-oaep.ts", "**/ecdh.ts"]
     }
   ]
 }
