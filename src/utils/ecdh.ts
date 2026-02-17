@@ -63,3 +63,74 @@ export async function exportPublicKey(publicKey: webcrypto.CryptoKey) {
 export async function exportPrivateKey(privateKey: webcrypto.CryptoKey) {
   return webcrypto.subtle.exportKey('pkcs8', privateKey) // pkcs8 = Public-Key Cryptography Standards #8 format for private keys
 }
+
+async function deriveMasterKeyFromPassword(
+  password: string,
+  salt: Uint8Array<ArrayBuffer>
+) {
+  // 1. Import the password as a CryptoKey
+  const passwordKey = await webcrypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2', // This works too `{ name: 'PBKDF2' }`, // Algorithm (Password-Based Key Derivation Function 2)
+    false,
+    ['deriveKey']
+  )
+
+  // 2. Derive a master key using PBKDF2
+  const deriveParams: Pbkdf2Params = {
+    name: 'PBKDF2',
+    salt,
+    iterations: 100_000, // Number of iterations (higher is more secure but slower)
+    hash: 'SHA-256', // Hash function
+  }
+
+  return webcrypto.subtle.deriveKey(
+    deriveParams,
+    passwordKey, // Base key (the imported password)
+    { name: 'AES-GCM', length: 256 }, // Derived key algorithm and length
+    false, // extractable
+    ['wrapKey', 'unwrapKey']
+  )
+}
+
+export async function protectPrivateKey(
+  privateKey: webcrypto.CryptoKey,
+  password: string
+) {
+  // 1. Derive a master key from the password using PBKDF2
+  const salt = crypto.getRandomValues(new Uint8Array(16)) // Random salt for key derivation
+  const masterKey = await deriveMasterKeyFromPassword(password, salt)
+
+  // 2. Wrap (encrypt) the private key using the derived master key
+  const iv = crypto.getRandomValues(new Uint8Array(12)) // Initialization vector for AES-GCM
+  const wrappedKey = await webcrypto.subtle.wrapKey(
+    'pkcs8', // format of the key to wrap
+    privateKey, // key to wrap (the private key)
+    masterKey, // wrapping key (derived master key)
+    { name: 'AES-GCM', iv } // Wrapping algorithm and parameters
+  )
+
+  return { wrappedKey, salt, iv }
+}
+
+export async function unprotectPrivateKey(
+  password: string,
+  iv: Uint8Array<ArrayBuffer>,
+  salt: Uint8Array<ArrayBuffer>,
+  wrappedKey: ArrayBuffer
+) {
+  // 1. Derive the master key from the password and salt using PBKDF2
+  const masterKey = await deriveMasterKeyFromPassword(password, salt)
+
+  // 3. Unwrap (decrypt) the private key using the derived master key
+  return webcrypto.subtle.unwrapKey(
+    'pkcs8', // format of the key to unwrap
+    wrappedKey, // wrapped key (the encrypted private key)
+    masterKey, // unwrapping key (derived master key)
+    { name: 'AES-GCM', iv }, // Unwrapping algorithm and parameters
+    ECDH_ALGO, // Algorithm of the unwrapped key (the original private key)
+    false, // extractable
+    ['deriveKey'] // Key usage for the unwrapped private key
+  )
+}

@@ -19,6 +19,11 @@ export async function EXAMPLE_RECOMMENDED_1() {
   const redKeysSpki = await exportPublicKey(redKeys.publicKey)
   const redKeysPkcs8 = await exportPrivateKey(redKeys.privateKey)
 
+  const rrSharedKey = await deriveSharedKey(
+    redKeys.privateKey,
+    redKeys.publicKey,
+    true // make the derived key extractable for demonstration purposes
+  )
   const rgSharedKey = await deriveSharedKey(
     redKeys.privateKey,
     greenKeys.publicKey,
@@ -40,6 +45,7 @@ export async function EXAMPLE_RECOMMENDED_1() {
     true // make the derived key extractable for demonstration purposes
   )
 
+  const rrSharedKeyRaw = await webcrypto.subtle.exportKey('raw', rrSharedKey)
   const rgSharedKeyRaw = await webcrypto.subtle.exportKey('raw', rgSharedKey)
   const grSharedKeyRaw = await webcrypto.subtle.exportKey('raw', grSharedKey)
   const gbSharedKeyRaw = await webcrypto.subtle.exportKey('raw', gbSharedKey)
@@ -50,6 +56,7 @@ export async function EXAMPLE_RECOMMENDED_1() {
     return window.btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
   }
 
+  const rrSharedKeyB64 = toB64(rrSharedKeyRaw)
   const rgSharedKeyB64 = toB64(rgSharedKeyRaw)
   const grSharedKeyB64 = toB64(grSharedKeyRaw)
   const gbSharedKeyB64 = toB64(gbSharedKeyRaw)
@@ -60,6 +67,7 @@ export async function EXAMPLE_RECOMMENDED_1() {
   console.log('Shared (AES) Key Size', rgSharedKeyRaw.byteLength, 'bytes')
   console.log()
 
+  console.log('Red-Red Shared Key (Base64):', rrSharedKeyB64, '\n')
   console.log('Red-Green Shared Key (Base64):', rgSharedKeyB64)
   console.log('Green-Red Shared Key (Base64):', grSharedKeyB64, '\n')
   console.log('Green-Blue Shared Key (Base64):', gbSharedKeyB64)
